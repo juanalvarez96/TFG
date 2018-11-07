@@ -1,0 +1,19 @@
+{
+    "name": "sarcasmDetector",
+    "module": "sarcasm",
+    "description": "Service for detecting sarcasm",
+    "author": "Juan Alvarez Fernandez Vallado",
+    "version": "1.0",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l", "lang"],
+            "required": true,
+            "options": ["esp"],
+            "default": "esp"
+        },
+    },
+    "requirements": {bs4,nltk, pandas, sklearn, numpy, scipy},
+
+    "dataset": "/final_dataset.csv",
+
+}

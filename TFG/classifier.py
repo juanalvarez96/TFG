@@ -5,7 +5,7 @@
 # 
 # In this notebook, the noironicos dataset will be treated, since ironicos's tweets are all ironic and we want a mixture of ironic and non ironic.
 
-# In[3]:
+# In[52]:
 
 
 # General import and load data
@@ -29,7 +29,7 @@ df.groupby('ironic').size()
 df=df.dropna(subset=['tweet'])
 
 
-# In[6]:
+# In[53]:
 
 
 # Before splitting database, a shuffling action will be performed since data is not randomized.
@@ -40,11 +40,12 @@ df = df.sample(frac=1).reset_index(drop=True)
 # Define X and Y
 X = df['tweet'].values
 y = df['ironic'].values.astype(int)
+print(X[34])
 
 
 # ### Train and test splitting
 
-# In[3]:
+# In[54]:
 
 
 
@@ -81,7 +82,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random
 #                 
 #                 for doc in docs]
 
-# In[4]:
+# In[55]:
 
 
 # A tokenizer will be defined
@@ -106,7 +107,7 @@ def custom_tokenizer(words):
 # 
 # ALOMEJOR HAY QUE QUITARLO
 
-# In[5]:
+# In[56]:
 
 
 # We will use NLTK's tag set
@@ -146,7 +147,7 @@ def PosStats(BaseEstimator, TransformerMixin):
 # ## Feature extraction Pipeline
 # The feature extraction will be carried out by using pipelines. The defined pipelines are selected in order to extract the desired features
 
-# In[6]:
+# In[57]:
 
 
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -163,7 +164,7 @@ ngrams_featurizer = Pipeline([
 # ## Feature Union Pipeline
 # Now we define which features we want to extract, how to combine them and later apple machine learning in the resulting feature set.
 
-# In[7]:
+# In[58]:
 
 
 from sklearn.naive_bayes import MultinomialNB
@@ -178,22 +179,22 @@ def my_pipeline(clf):
     pipeline = Pipeline([
        ('features', FeatureUnion([
                     
-                    ('words', TfidfVectorizer(tokenizer=custom_tokenizer)),
-                    ('ngrams', ngrams_featurizer),
+                ('words', TfidfVectorizer(tokenizer=custom_tokenizer)),
+                ('ngrams', ngrams_featurizer),
                     #('pos_stats', Pipeline([
                                 #('pos_stats', PosStats()),
                                 #('vectors', DictVectorizer())
                             #])),
-                    ('lda', Pipeline([ 
-                                ('count', CountVectorizer(tokenizer=custom_tokenizer)),
-                                ('lda',  LatentDirichletAllocation(n_components=45, max_iter=5, # Change ntopics
+                ('lda', Pipeline([ 
+                             ('count', CountVectorizer(tokenizer=custom_tokenizer)),
+                            ('lda',  LatentDirichletAllocation(n_components=45, max_iter=5, # Change ntopics
                                                        learning_method='online', 
                                                        learning_offset=50.,
                                                        random_state=0))
-                            ])),
-                ])),
+                         ])),
+             ])),
        
-        ('clf', clf)  # classifier
+    ('clf', clf)  # classifier
     ])
     return pipeline
     
@@ -201,7 +202,7 @@ def my_pipeline(clf):
 
 # ## Multinomial NaiveBayes
 
-# In[8]:
+# In[59]:
 
 
 from sklearn.naive_bayes import  MultinomialNB
@@ -212,14 +213,14 @@ modelNB = my_pipeline(model)
 modelNB.fit(X_train, y_train)
 
 
-# In[9]:
+# In[60]:
 
 
 predicted1 = modelNB.predict(X_test)
 expected = y_test
 
 
-# In[10]:
+# In[61]:
 
 
 from sklearn import metrics
@@ -227,7 +228,7 @@ from sklearn import metrics
 metrics.accuracy_score(expected, predicted1)
 
 
-# In[11]:
+# In[62]:
 
 
 print(classification_report(expected, predicted1, digits=5))
@@ -235,23 +236,24 @@ print(classification_report(expected, predicted1, digits=5))
 
 # ### SVC
 
-# In[12]:
+# In[63]:
 
 
 from sklearn.svm import SVC
+from sklearn import metrics
 
 types_of_kernels = ['linear', 'rbf', 'poly']
 
 kernel = types_of_kernels[0]
 gamma = 3.0
 
-# Create kNN model
+# Create SVC model
 model = SVC(kernel=kernel, probability=True, gamma=gamma)
 modelSVC = my_pipeline(model)
 modelSVC.fit(X_train, y_train)
 
 
-# In[13]:
+# In[64]:
 
 
 predicted2 = modelSVC.predict(X_test)
@@ -262,7 +264,7 @@ print(classification_report(expected, predicted2, digits=5))
 
 # ### Kneighbors Classifier
 
-# In[14]:
+# In[65]:
 
 
 from sklearn.neighbors import KNeighborsClassifier
@@ -271,7 +273,7 @@ modelKnn = my_pipeline(model)
 modelKnn.fit(X_train, y_train)
 
 
-# In[15]:
+# In[66]:
 
 
 predicted3 = modelKnn.predict(X_test)
@@ -282,7 +284,7 @@ print(classification_report(expected, predicted3, digits=5))
 
 # ### Logistic Regression classifier
 
-# In[16]:
+# In[67]:
 
 
 from sklearn.linear_model import LogisticRegression
@@ -291,7 +293,7 @@ modelLR = my_pipeline(model)
 modelLR.fit(X_train, y_train)
 
 
-# In[17]:
+# In[68]:
 
 
 predicted4 = modelLR.predict(X_test)
@@ -365,31 +367,34 @@ for score in scoresNB:
 # for param_name in sorted(parametersSVC.keys()):
 #     print("%s: %r" % (param_name, gs_SVC.best_params_[param_name]))
 
-# In[18]:
+# In[12]:
 
 
+import numpy as np
 from sklearn.model_selection import GridSearchCV
-tuned_parameters = {'C': [1, 10, 100, 1000]}
 
-scoresSVC = ['precision', 'recall']
+tuned_parameters = [{'clf__kernel': ['rbf'], 'clf__gamma': [1e-3, 1e-4],
+                     'clf__C': [1, 10, 100, 1000]},
+                    {'clf__kernel': ['linear'], 'clf__C': [1, 10, 100, 1000]}]
+scores = ['precision', 'recall']
 
-for score in scoresSVC:
+for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
     print()
 
-    gs_SVC = GridSearchCV(modelSVC, tuned_parameters, cv=5,
+    clf = GridSearchCV(modelSVC, tuned_parameters, cv=5,
                        scoring='%s_macro' % score)
-    gs_SVC.fit(X_train, y_train)
+    clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
     print()
-    print(gs_SVC.best_params_)
+    print(clf.best_params_)
     print()
     print("Grid scores on development set:")
     print()
-    means = gs_SVC.cv_results_['mean_test_score']
-    stds = gs_SVC.cv_results_['std_test_score']
-    for mean, std, params in zip(means, stds, gs_SVC.cv_results_['params']):
+    means = clf.cv_results_['mean_test_score']
+    stds = clf.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
         print("%0.3f (+/-%0.03f) for %r"
               % (mean, std * 2, params))
     print()
@@ -399,9 +404,15 @@ for score in scoresSVC:
     print("The model is trained on the full development set.")
     print("The scores are computed on the full evaluation set.")
     print()
-    y_true, y_pred = y_test, gs_SVC.predict(X_test)
+    y_true, y_pred = y_test, clf.predict(X_test)
     print(classification_report(y_true, y_pred))
     print()
+
+
+# In[20]:
+
+
+modelKnn.get_params().keys()
 
 
 # ### KNeighbors Classifier
@@ -419,28 +430,37 @@ for score in scoresSVC:
 # In[ ]:
 
 
+import numpy as np
 from sklearn.model_selection import GridSearchCV
-tuned_parameters = {'clf__n_neighbors': range(1,15), 'clf__p':[1,2]}
 
-scoresKNN = ['precision', 'recall']
 
-for score in scoresKNN:
+k__range = list(range(1, 31))
+
+
+weight__options = ['uniform', 'distance']
+
+tuned_parameters = [{'clf__n_neighbors': k__range,
+                     'clf__weights': ['uniform', 'distance']},
+                   ]
+scores = ['precision', 'recall']
+
+for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
     print()
 
-    gs_KNN = GridSearchCV(modelKnn, tuned_parameters, cv=5,
+    clf = GridSearchCV(modelKnn, tuned_parameters, cv=5,
                        scoring='%s_macro' % score)
-    gs_KNN.fit(X_train, y_train)
+    clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
     print()
-    print(gs_KNN.best_params_)
+    print(clf.best_params_)
     print()
     print("Grid scores on development set:")
     print()
-    means = gs_KNN.cv_results_['mean_test_score']
-    stds = gs_KNN.cv_results_['std_test_score']
-    for mean, std, params in zip(means, stds, gs_KNN.cv_results_['params']):
+    means = clf.cv_results_['mean_test_score']
+    stds = clf.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
         print("%0.3f (+/-%0.03f) for %r"
               % (mean, std * 2, params))
     print()
@@ -450,7 +470,7 @@ for score in scoresKNN:
     print("The model is trained on the full development set.")
     print("The scores are computed on the full evaluation set.")
     print()
-    y_true, y_pred = y_test, gs_KNN.predict(X_test)
+    y_true, y_pred = y_test, clf.predict(X_test)
     print(classification_report(y_true, y_pred))
     print()
 
@@ -503,4 +523,32 @@ for score in scoresLR:
     y_true, y_pred = y_test, gs_LR.predict(X_test)
     print(classification_report(y_true, y_pred))
     print()
+
+
+# ## Save optimal classifier in disk
+
+# In[41]:
+
+
+# By looking at the output from the above code, the best classifier is the SVC.
+import pickle
+# Dump the trained classifier with Pickle
+svm_pkl_filename = 'senpy/optimized_classifier.pkl'
+# Open the file to save as pkl file
+svm_model_pkl = open(svm_pkl_filename, 'wb')
+pickle.dump(modelSVC, svm_model_pkl)
+# Close the pickle instances
+svm_model_pkl.close()
+
+
+# In[30]:
+
+
+print(y_train)
+
+
+# In[44]:
+
+
+
 
