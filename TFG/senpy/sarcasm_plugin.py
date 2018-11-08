@@ -1,19 +1,24 @@
 
-# coding: utf-8
-
-# In[41]:
-
-
-# This is a necessary import for importing the classifier. The code belongs to the classifier.ipynb notebook.
+import senpy
+from senpy import AnalysisPlugin
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.stem import SnowballStemmer
 from nltk.corpus import stopwords
+import senpy 
+from senpy.plugins import AnalysisPlugin, SentimentPlugin#, ShelfMixin
+from senpy.models import Response, Entry, Sentiment, Results
 import pickle
 
-
-# In[42]:
-
-
+# This is a necessary import for importing the classifier. The code belongs to the classifier.ipynb notebook.
+def custom_tokenizer(words):
+    tokens = word_tokenize(words.lower())
+    stemmer = SnowballStemmer('spanish')
+    lemmas = [stemmer.stem(t) for t in tokens]
+    stoplist = stopwords.words('spanish')
+    lemmas_clean = [w for w in lemmas if w not in stoplist]
+    punctuation = set(string.punctuation)
+    lemmas_punct = [w for w in lemmas_clean if  w not in punctuation]
+    return lemmas_punct
 #UTIL
 #https://senpy.readthedocs.io/en/latest/plugins.html#docker-image
 class SentimentPlugin(AnalysisPlugin):
@@ -23,18 +28,10 @@ class SentimentPlugin(AnalysisPlugin):
     
     # Load classifier
     def activate(self):
-        def custom_tokenizer(words):
-            tokens = word_tokenize(words.lower())
-            stemmer = SnowballStemmer('spanish')
-            lemmas = [stemmer.stem(t) for t in tokens]
-            stoplist = stopwords.words('spanish')
-            lemmas_clean = [w for w in lemmas if w not in stoplist]
-            punctuation = set(string.punctuation)
-            lemmas_punct = [w for w in lemmas_clean if  w not in punctuation]
-            return lemmas_punct
+ 
         
         # Import classifier
-        filename = 'optimized_classifier.pkl'
+        filename = 'senpy/optimized_classifier.pkl' # Esto es una mierda. Hay que poner senpy/. Cambialo!!
         svm_model_pkl = open(filename, 'rb')
         self.classifier = pickle.load(svm_model_pkl)
     

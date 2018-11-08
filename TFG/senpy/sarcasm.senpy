@@ -1,6 +1,6 @@
 {
     "name": "sarcasmDetector",
-    "module": "sarcasm",
+    "module": "sarcasm_plugin",
     "description": "Service for detecting sarcasm",
     "author": "Juan Alvarez Fernandez Vallado",
     "version": "1.0",
