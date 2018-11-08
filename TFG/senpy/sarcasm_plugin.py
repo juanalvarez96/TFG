@@ -1,41 +1,44 @@
 
 import senpy
-from senpy import AnalysisPlugin
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.stem import SnowballStemmer
-from nltk.corpus import stopwords
-import senpy 
-from senpy.plugins import AnalysisPlugin, SentimentPlugin#, ShelfMixin
+from senpy.plugins import AnalysisPlugin, ShelfMixin
 from senpy.models import Response, Entry, Sentiment, Results
-import pickle
+from sklearn.model_selection import train_test_split
+import nltk
+import pandas as pd
+from pandas import Series, DataFrame
+import matplotlib.pyplot as plt
+from nltk.tokenize import sent_tokenize, word_tokenize
+import re
+import os
+
 
 # This is a necessary import for importing the classifier. The code belongs to the classifier.ipynb notebook.
-def custom_tokenizer(words):
-    tokens = word_tokenize(words.lower())
-    stemmer = SnowballStemmer('spanish')
-    lemmas = [stemmer.stem(t) for t in tokens]
-    stoplist = stopwords.words('spanish')
-    lemmas_clean = [w for w in lemmas if w not in stoplist]
-    punctuation = set(string.punctuation)
-    lemmas_punct = [w for w in lemmas_clean if  w not in punctuation]
-    return lemmas_punct
 #UTIL
 #https://senpy.readthedocs.io/en/latest/plugins.html#docker-image
-class SentimentPlugin(AnalysisPlugin):
+class MyPLugin(ShelfMixin ,AnalysisPlugin):
     '''Plugin to detetct sarcasm'''
     author = "Juan Álvarez Fernández del Vallado"
     version = 1
-    
-    # Load classifier
+
+    def train(self):
+        ''' Classifier will be defined and trained here'''
+        # Loading the datasets
+
+
+        # Import database
+        df=pd.read_csv('final_dataset.csv', encoding='utf-8', delimiter=",", header=0)
+        df.groupby('ironic').size()
+
+        # Delete rows containing nan
+        df=df.dropna(subset=['tweet'])
+        print(df)
+                #return classifier
+            # Load classifier
     def activate(self):
- 
+        train()
         
-        # Import classifier
-        filename = 'senpy/optimized_classifier.pkl' # Esto es una mierda. Hay que poner senpy/. Cambialo!!
-        svm_model_pkl = open(filename, 'rb')
-        self.classifier = pickle.load(svm_model_pkl)
     
-    def analyse_entry(entry, params):
+    def analyse_entry(self, entry, params):
         
         text = entry["nif:isString"]
         
