@@ -8,6 +8,17 @@ import pandas as pd
 from pandas import Series, DataFrame
 import matplotlib.pyplot as plt
 from nltk.tokenize import sent_tokenize, word_tokenize
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
+from sklearn.base import BaseEstimator, TransformerMixin
+from nltk.stem import SnowballStemmer
+from nltk.corpus import stopwords
+from sklearn.svm import SVC
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.decomposition import NMF, LatentDirichletAllocation
+from sklearn.svm import SVC
+import string
 import re
 import os
 
@@ -15,7 +26,7 @@ import os
 # This is a necessary import for importing the classifier. The code belongs to the classifier.ipynb notebook.
 #UTIL
 #https://senpy.readthedocs.io/en/latest/plugins.html#docker-image
-class MyPLugin(ShelfMixin ,AnalysisPlugin):
+class MyPLugin(ShelfMixin, AnalysisPlugin):
     '''Plugin to detetct sarcasm'''
     author = "Juan Álvarez Fernández del Vallado"
     version = 1
@@ -24,35 +35,92 @@ class MyPLugin(ShelfMixin ,AnalysisPlugin):
         ''' Classifier will be defined and trained here'''
         # Loading the datasets
 
-
         # Import database
-        df=pd.read_csv('final_dataset.csv', encoding='utf-8', delimiter=",", header=0)
+        df = pd.read_csv('final_dataset.csv', encoding='utf-8',
+                         delimiter=",", header=0)
         df.groupby('ironic').size()
 
         # Delete rows containing nan
-        df=df.dropna(subset=['tweet'])
-        print(df)
-                #return classifier
-            # Load classifier
+        df = df.dropna(subset=['tweet'])
+        # Hasta aquí llego
+
+        # Before splitting database, a shuffling action will be performed since data is not randomized.
+        # That way the train and test splitting will be more balanced
+
+        df = df.sample(frac=1).reset_index(drop=True)
+
+        # Define X and Y
+        X = df['tweet'].values
+        y = df['ironic'].values.astype(int)
+
+        # Since optimum clasifier's parameters are already known, no need to split dataset.
+
+        # Define model
+
+        def custom_tokenizer(words):
+            tokens = word_tokenize(words.lower())
+            stemmer = SnowballStemmer('spanish')
+            lemmas = [stemmer.stem(t) for t in tokens]
+            stoplist = stopwords.words('spanish')
+            lemmas_clean = [w for w in lemmas if w not in stoplist]
+            punctuation = set(string.punctuation)
+            lemmas_punct = [w for w in lemmas_clean if w not in punctuation]
+            return lemmas_punct
+
+        ngrams_featurizer = Pipeline([
+            ('count_vectorizer',  CountVectorizer(ngram_range=(1, 2), encoding='ISO-8859-1',
+                                                  tokenizer=custom_tokenizer)),
+            ('tfidf_transformer', TfidfTransformer())
+        ])
+
+        modelSVC = Pipeline([
+            ('features', FeatureUnion([
+
+                ('words', TfidfVectorizer(tokenizer=custom_tokenizer)),
+                ('ngrams', ngrams_featurizer),
+                #('pos_stats', Pipeline([
+                #('pos_stats', PosStats()),
+                #('vectors', DictVectorizer())
+                #])),
+                ('lda', Pipeline([
+                    ('count', CountVectorizer(tokenizer=custom_tokenizer)),
+                    ('lda',  LatentDirichletAllocation(n_components=45, max_iter=5,  # Change ntopics
+                                                       learning_method='online',
+                                                       learning_offset=50.,
+                                                       random_state=0))
+                ])),
+            ])),
+
+            # classifier with optimum parameters
+            ('clf', SVC(C=1, kernel='linear'))
+        ])
+
+        # Fit Model
+        modelSVC.fit(X,y)
+
+        return modelSVC
+
     def activate(self):
-        train()
-        
-    
+        if 'classifier' not in self.sh:
+            classifier = self.train()
+            self.sh['classifier'] = classifier
+        self.classifier = self.sh['classifier']
+        #self.save()
+
     def analyse_entry(self, entry, params):
-        
+
         text = entry["nif:isString"]
-        
+        value = self.classifier.predict([text])
+        prediction = value[0]
+
         print(text+"Traza")
-        
-        value = modelSVM.predict(text[0])
-        
+
         print("PREDICTION {}".format(prediction))
         if (prediction == 1):
             is_ironic = True
         else:
             is_ironic = False
-        entity = {'text':text,'is_ironic':is_ironic}
-
+        entity = {'text': text, 'is_ironic': is_ironic}
 
         #No poner en foaf:predator por que foaf predator no existe como etiqueda dentro de la ontologia foaf
         #entity = {'@id':'Entity0','text':text,'is_insomniac':is_insomniac}
@@ -60,12 +128,9 @@ class MyPLugin(ShelfMixin ,AnalysisPlugin):
         #,'foaf:accountName':params['input'],'prov:wasGeneratedBy':self.id}
 
         #entry.entities = []
-        #entry.entities.append(entity)        
+        #entry.entities.append(entity)
         #yield entry
         yield entity
-    
+
     def deactivate(self):
         self.close()
-        
-        
-
