@@ -6,7 +6,6 @@ from sklearn.model_selection import train_test_split
 import nltk
 import pandas as pd
 from pandas import Series, DataFrame
-import matplotlib.pyplot as plt
 from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
@@ -23,6 +22,16 @@ import re
 import os
 
 
+def custom_tokenizer(words):
+    tokens = word_tokenize(words.lower())
+    stemmer = SnowballStemmer('spanish')
+    lemmas = [stemmer.stem(t) for t in tokens]
+    stoplist = stopwords.words('spanish')
+    lemmas_clean = [w for w in lemmas if w not in stoplist]
+    punctuation = set(string.punctuation)
+    lemmas_punct = [w for w in lemmas_clean if w not in punctuation]
+    return lemmas_punct
+
 # This is a necessary import for importing the classifier. The code belongs to the classifier.ipynb notebook.
 #UTIL
 #https://senpy.readthedocs.io/en/latest/plugins.html#docker-image
@@ -30,14 +39,22 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
     '''Plugin to detetct sarcasm'''
     author = "Juan Álvarez Fernández del Vallado"
     version = 1
+    
 
     def train(self):
         ''' Classifier will be defined and trained here'''
-        # Loading the datasets
+        import nltk
+        nltk.download('punkt')
+        nltk.download('stopwords')
 
+
+
+        # Loading the datasets
+        path = os.path.dirname(os.path.abspath(__file__))
+        self.dataset = 'final_dataset.csv'
+        df = pd.read_csv('final_dataset.csv', encoding='utf-8', delimiter=",", header=0)
         # Import database
-        df = pd.read_csv('final_dataset.csv', encoding='utf-8',
-                         delimiter=",", header=0)
+        
         df.groupby('ironic').size()
 
         # Delete rows containing nan
@@ -57,15 +74,7 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
 
         # Define model
 
-        def custom_tokenizer(words):
-            tokens = word_tokenize(words.lower())
-            stemmer = SnowballStemmer('spanish')
-            lemmas = [stemmer.stem(t) for t in tokens]
-            stoplist = stopwords.words('spanish')
-            lemmas_clean = [w for w in lemmas if w not in stoplist]
-            punctuation = set(string.punctuation)
-            lemmas_punct = [w for w in lemmas_clean if w not in punctuation]
-            return lemmas_punct
+        
 
         ngrams_featurizer = Pipeline([
             ('count_vectorizer',  CountVectorizer(ngram_range=(1, 2), encoding='ISO-8859-1',
