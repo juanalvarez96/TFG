@@ -1,13 +1,14 @@
 
 import senpy
-from senpy import AnalysisPlugin
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.stem import SnowballStemmer
 from nltk.corpus import stopwords
-import senpy 
-from senpy.plugins import AnalysisPlugin, SentimentPlugin#, ShelfMixin
+from senpy.plugins import AnalysisPlugin, ShelfMixin, SentimentPlugin
 from senpy.models import Response, Entry, Sentiment, Results
+from nltk.parse.malt import train_from_file
+import os
 import pickle
+import string
 
 # This is a necessary import for importing the classifier. The code belongs to the classifier.ipynb notebook.
 def custom_tokenizer(words):
@@ -21,27 +22,27 @@ def custom_tokenizer(words):
     return lemmas_punct
 #UTIL
 #https://senpy.readthedocs.io/en/latest/plugins.html#docker-image
-class SentimentPlugin(AnalysisPlugin):
+class SarcasmPlugin(AnalysisPlugin, ShelfMixin):
     '''Plugin to detetct sarcasm'''
     author = "Juan Álvarez Fernández del Vallado"
     version = 1
-    
+    file_in_data='optimized_classifier.pkl'
+    file_in_sources = 'senpy_data'
     # Load classifier
     def activate(self):
- 
-        
-        # Import classifier
-        filename = 'senpy/optimized_classifier.pkl' # Esto es una mierda. Hay que poner senpy/. Cambialo!!
-        svm_model_pkl = open(filename, 'rb')
-        self.classifier = pickle.load(svm_model_pkl)
+        with self.open(self.file_in_data) as f:
+            self.classifier = train_from_file(f)
+        file_in_source = os.path.join(self.get_folder(), self.file_in_sources)
+        with self.open(file_in_source) as f:
+            pass
     
-    def analyse_entry(entry, params):
+    def analyse_entry(self, entry, params):
         
         text = entry["nif:isString"]
         
         print(text+"Traza")
-        
-        value = modelSVM.predict(text[0])
+        modelSVM = self.classifier 
+        prediction = modelSVM.predict(text[0])
         
         print("PREDICTION {}".format(prediction))
         if (prediction == 1):
