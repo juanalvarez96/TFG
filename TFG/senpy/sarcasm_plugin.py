@@ -12,7 +12,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, Tf
 from sklearn.base import BaseEstimator, TransformerMixin
 from nltk.stem import SnowballStemmer
 from nltk.corpus import stopwords
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
@@ -20,6 +20,8 @@ from sklearn.svm import SVC
 import string
 import re
 import os
+import pickle
+import pdb
 
 
 def custom_tokenizer(words):
@@ -44,6 +46,7 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
     def train(self):
         ''' Classifier will be defined and trained here'''
         import nltk
+        # Prueba a quitar estos dos (solo hacen falta una vez)
         nltk.download('punkt')
         nltk.download('stopwords')
 
@@ -101,7 +104,8 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
             ])),
 
             # classifier with optimum parameters
-            ('clf', SVC(C=1, kernel='linear'))
+            ('clf', LinearSVC(C=1, ))
+            # Usar clasificador linearsvc
         ])
 
         # Fit Model
@@ -110,18 +114,21 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
         return modelSVC
 
     def activate(self):
+        
+        #pdb.set_trace()
         if 'classifier' not in self.sh:
             classifier = self.train()
             self.sh['classifier'] = classifier
         self.classifier = self.sh['classifier']
-        #self.save()
+        self.save()
 
     def analyse_entry(self, entry, params):
-
+        pdb.set_trace()
         text = entry["nif:isString"]
         value = self.classifier.predict([text])
+        pdb.set_trace()
         prediction = value[0]
-
+        pdb.set_trace()
         if (prediction == 1):
             is_ironic = True
         else:

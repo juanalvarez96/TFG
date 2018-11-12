@@ -12,7 +12,7 @@
             "default": "esp"
         },
     },
-    "requirements": {bs4,nltk, pandas, sklearn, numpy, scipy},
+    "requirements": {bs4, nltk, pandas, sklearn, numpy, scipy},
 
     "dataset": "final_dataset.csv",
 
