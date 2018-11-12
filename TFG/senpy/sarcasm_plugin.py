@@ -93,7 +93,7 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
                 #])),
                 ('lda', Pipeline([
                     ('count', CountVectorizer(tokenizer=custom_tokenizer)),
-                    ('lda',  LatentDirichletAllocation(n_components=45, max_iter=5,  # Change ntopics
+                    ('lda',  LatentDirichletAllocation(n_components=10, max_iter=5,  # Change ntopics (optimized = 45)
                                                        learning_method='online',
                                                        learning_offset=50.,
                                                        random_state=0))
@@ -122,9 +122,6 @@ class MyPLugin(ShelfMixin, AnalysisPlugin):
         value = self.classifier.predict([text])
         prediction = value[0]
 
-        print(text+"Traza")
-
-        print("PREDICTION {}".format(prediction))
         if (prediction == 1):
             is_ironic = True
         else:
