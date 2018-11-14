@@ -1,19 +1,22 @@
-{
-    "name": "sarcasmDetector",
-    "module": "sarcasm_plugin",
-    "description": "Service for detecting sarcasm",
-    "author": "Juan Alvarez Fernandez Vallado",
-    "version": "1.0",
-    "extra_params": {
-        "language": {
-            "aliases": ["language", "l", "lang"],
-            "required": true,
-            "options": ["esp"],
-            "default": "esp"
-        },
-    },
-    "requirements": {bs4, nltk, pandas, sklearn, numpy, scipy},
-
-    "dataset": "final_dataset.csv",
-
-}
+name: sarcasm-twitter
+module: sarcasm_plugin
+description: Plugin to detect sarcasm in Tweets
+author: Juan Alvarez
+version: '1.0'
+extra_params:
+  language: 
+    aliases: 
+      - language
+      - l
+      - lang
+    required: true
+    options:
+      - es
+    default: es
+requirements:
+  - bs4
+  - nltk
+  - pandas
+  - sklearn
+  - numpy
+dataset: final_dataset.csv
