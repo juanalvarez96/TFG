@@ -1,5 +1,5 @@
 name: sarcasm-twitter
-module: sarcasm_plugin
+module: sarcasm_class
 description: Plugin to detect sarcasm in Tweets
 author: Juan Alvarez
 version: '1.0'
