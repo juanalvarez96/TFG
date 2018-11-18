@@ -19,4 +19,4 @@ requirements:
   - pandas
   - sklearn
   - numpy
-dataset: final_dataset.csv
+dataset: /final_dataset.csv
