@@ -1,7 +1,7 @@
 import pandas as pd
 import string
 import os
-from sklearn import svm
+from sklearn import svm, naive_bayes
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 from sklearn.decomposition import LatentDirichletAllocation
@@ -91,14 +91,25 @@ class Plugin(AnalysisPlugin, ShelfMixin):
             #pdb.set_trace()
             self.sh['classifier'] = classifier
 
-        self.classifier = self.sh['classifier']
+        self._classifier = self.sh['classifier']
         self.save()
 
     def analyse_entry(self, entry, params):
         text = entry["nif:isString"]
         #pdb.set_trace()
-        value = self.classifier.predict([text])
-        print(value[0])
+        value = self._classifier.predict([text])
+        ironic = value[0]
+
+        if ironic == 1:
+            outputText="Ironic"
+        elif ironic == 0:
+            outputText="Non Ironic"
+        else:
+            outputText="Error classifying text"
+        entity = {'@id':'Entity0','text':text, 'is_ironic': outputText}
+
+
+        yield entity
 
     def deactivate(self):
         self.close()
