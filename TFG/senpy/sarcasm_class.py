@@ -1,6 +1,7 @@
 import pandas as pd
 import string
 import os
+from sklearn.naive_bayes import  MultinomialNB
 from sklearn import svm, naive_bayes
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
@@ -71,16 +72,16 @@ class Plugin(AnalysisPlugin, ShelfMixin):
                 #])),
                 ('lda', Pipeline([
                     ('count', CountVectorizer(tokenizer=custom_tokenizer)),
-                    ('lda',  LatentDirichletAllocation(n_components=45, max_iter=5,  # Change ntopics
+                    ('lda',  LatentDirichletAllocation(n_components=20, max_iter=5,  # Change ntopics
                                                        learning_method='online',
                                                        learning_offset=50.,
                                                        random_state=0))
                 ])),
             ])),
 
-            ('clf', svm.LinearSVC())  # classifier
+            ('clf', MultinomialNB(alpha=0.42))  # classifier
         ])
-        pdb.set_trace()
+        #pdb.set_trace()
         modelSVC.fit(X, y)
 
         return modelSVC
@@ -90,7 +91,8 @@ class Plugin(AnalysisPlugin, ShelfMixin):
             classifier = self.train()
             #pdb.set_trace()
             self.sh['classifier'] = classifier
-
+        
+        classifier = self.train()
         self._classifier = self.sh['classifier']
         self.save()
 
@@ -101,12 +103,12 @@ class Plugin(AnalysisPlugin, ShelfMixin):
         ironic = value[0]
 
         if ironic == 1:
-            outputText="Ironic"
+            outputText="Sarcastic"
         elif ironic == 0:
-            outputText="Non Ironic"
+            outputText="Non sarcastic"
         else:
             outputText="Error classifying text"
-        entity = {'@id':'Entity0','text':text, 'is_ironic': outputText}
+        entity = {'@id':'Entity0','text':text, 'is_sarcastic': outputText}
 
 
         yield entity
